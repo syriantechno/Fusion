@@ -3,11 +3,9 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QPushButton, QFrame
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt, QSize, Signal
 
-from profile.profile_window import ProfileWindow
 
-
-class ProfileToolsPanel(QWidget):
-    """🧩 لوحة أدوات البروفايل (Profile Tools) — نسخة Fusion Style"""
+class ToolsToolsPanel(QWidget):
+    """🛠️ لوحة أدوات قسم الأدوات (Tools Panel) — Fusion style"""
 
     tool_selected = Signal(str)
 
@@ -17,20 +15,27 @@ class ProfileToolsPanel(QWidget):
         self.active_tool = None
         self.buttons = {}
 
-        # 🔹 الأدوات الأساسية
-        profile_tools = [
-            ("select.png", "تحديد بروفايل", "select"),
-            ("add_profile.png", "إضافة بروفايل", "add_profile"),
-            ("edit_profile.png", "تعديل بروفايل", "edit_profile"),
-            ("library.png", "مكتبة البروفايلات", "library"),  # ← فتح النافذة
+        # 🔹 قائمة الأدوات الأساسية الخاصة بالأدوات (Tool Library, Toolpath, GCode)
+        tool_tools = [
+            ("tool_library.png", "مكتبة الأدوات", "tool_library"),
+            ("add_tool.png", "إضافة أداة", "add_tool"),
+            ("edit_tool.png", "تعديل أداة", "edit_tool"),
+            ("delete.png", "حذف أداة", "delete_tool"),
         ]
 
-        # 🔹 أدوات إضافية
+        # 🔹 عمليات التصنيع / المسارات
+        machining_tools = [
+            ("path.png", "مسار التشغيل", "toolpath"),
+            ("simulate.png", "محاكاة المسار", "simulate"),
+            ("gcode.png", "توليد G-Code", "generate_gcode"),
+        ]
+
+        # 🔹 أداة الإلغاء
         extra_tools = [
-            ("cancel.png", "إلغاء", "none")
+            ("cancel.png", "إلغاء التحديد", "none")
         ]
 
-        # 🎨 ستايل عام
+        # 🎨 الستايل العام Fusion-like
         self.setStyleSheet("""
             QWidget {
                 background-color: #F1F2F1;
@@ -52,14 +57,21 @@ class ProfileToolsPanel(QWidget):
         layout.setSpacing(6)
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
-        # 🧱 أزرار الأدوات
-        for icon_file, label, tool_id in profile_tools:
+        # 🟧 أدوات المكتبة
+        for icon_file, label, tool_id in tool_tools:
             btn = self._make_button(icon_file, label, tool_id)
             layout.addWidget(btn)
 
         layout.addWidget(self._make_separator())
 
-        # ❌ زر الإلغاء
+        # 🟦 أدوات المسار والتصنيع
+        for icon_file, label, tool_id in machining_tools:
+            btn = self._make_button(icon_file, label, tool_id)
+            layout.addWidget(btn)
+
+        layout.addWidget(self._make_separator())
+
+        # ❌ إلغاء
         for icon_file, label, tool_id in extra_tools:
             btn = self._make_button(icon_file, label, tool_id)
             layout.addWidget(btn)
@@ -67,7 +79,7 @@ class ProfileToolsPanel(QWidget):
         layout.addStretch()
 
     # ------------------------------------------------------------
-    # 🔹 زر موحد
+    # 🔹 إنشاء زر أيقونة
     # ------------------------------------------------------------
     def _make_button(self, icon_file, label, tool_id):
         btn = QPushButton()
@@ -81,7 +93,7 @@ class ProfileToolsPanel(QWidget):
         return btn
 
     # ------------------------------------------------------------
-    # 🔹 فاصل رأسي
+    # 🔹 فاصل عمودي أنيق
     # ------------------------------------------------------------
     def _make_separator(self):
         sep = QFrame()
@@ -92,10 +104,10 @@ class ProfileToolsPanel(QWidget):
         return sep
 
     # ------------------------------------------------------------
-    # 🔹 تفعيل الأداة
+    # 🔹 تفعيل أداة معينة
     # ------------------------------------------------------------
     def activate_tool(self, tool_name):
-        """تفعيل أداة معينة"""
+        """تفعيل الأداة وتحديث المظهر"""
         for name, btn in self.buttons.items():
             btn.setChecked(name == tool_name)
             if name == tool_name and tool_name != "none":
@@ -117,29 +129,9 @@ class ProfileToolsPanel(QWidget):
                 """)
 
         self.active_tool = None if tool_name == "none" else tool_name
-        print(f"🟢 [ProfileTools] Active tool = {self.active_tool or 'None'}")
-
-        # 🪟 فتح نافذة إدارة البروفايلات عند الضغط على library
-        if tool_name == "library":
-            self.open_profile_manager()
+        print(f"🟢 [ToolsPanel] Active tool = {self.active_tool or 'None'}")
 
         if self.vtk_viewer:
             self.vtk_viewer.set_active_tool(self.active_tool)
 
         self.tool_selected.emit(self.active_tool or "")
-
-    # ------------------------------------------------------------
-    # 🔹 فتح نافذة إدارة البروفايلات
-    # ------------------------------------------------------------
-    def open_profile_manager(self):
-        """فتح نافذة إدارة مكتبة البروفايلات"""
-        print("📂 فتح نافذة إدارة مكتبة البروفايلات...")
-        from PySide6.QtCore import Qt
-        self.profile_window = ProfileWindow(parent=None)
-        self.profile_window.setWindowModality(Qt.ApplicationModal)
-        self.profile_window.setWindowFlag(Qt.Window, True)
-        self.profile_window.setWindowTitle("📘 مكتبة البروفايلات")
-        self.profile_window.resize(1000, 600)
-        self.profile_window.show()
-        self.profile_window.raise_()
-
