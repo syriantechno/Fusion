@@ -77,7 +77,9 @@ class VTKViewer(QWidget):
         """تحديد الأداة الحالية"""
         self.current_tool = tool_name or "none"
         print(f"🎯 [Viewer] Active tool: {self.current_tool}")
-
+        # 🆕 تمرير الأداة إلى interactor
+        if hasattr(self, "style"):
+            self.style.current_tool = self.current_tool
     # ------------------------------------------------------------------
     # 🔄 إعادة الرسم
     # ------------------------------------------------------------------

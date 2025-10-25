@@ -16,6 +16,7 @@ class SketchToolsPanel(QWidget):
 
         # 🔹 أدوات الرسم الأساسية
         draw_tools = [
+            ("select.png", "تحديد (Select)", "select"),
             ("line.png", "خط", "line"),
             ("circle.png", "دائرة", "circle"),
             ("rect.png", "مستطيل", "rect"),
