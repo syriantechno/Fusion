@@ -1,0 +1,43 @@
+name: alumcnc_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # === Python ===
+  - python=3.10
+
+  # === Qt / GUI ===
+  - pyside6
+  - pyqtgraph
+  - qt-main
+  - qt-webengine
+
+  # === OCC (3D CAD Kernel) ===
+  - pythonocc-core=7.9.0
+
+  # === Geometry / Math ===
+  - numpy
+  - scipy
+
+  # === DXF / CAD IO ===
+  - ezdxf
+  - shapely
+
+  # === Visualization / VTK (اختياري لتحليل متقدم) ===
+  - pyvista
+  - vtk
+
+  # === Theme / واجهات ===
+  - pip
+  - pip:
+      - qdarktheme==2.1.0
+
+  # === أدوات مساعدة ===
+  - pyserial
+  - pillow
+  - matplotlib
+  - requests
+  - tqdm
+  - openpyxl
+  - reportlab
+  - pypandoc
