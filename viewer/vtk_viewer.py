@@ -76,6 +76,8 @@ class VTKViewer(QWidget):
     def set_active_tool(self, tool_name: str):
         """تحديد الأداة الحالية"""
         self.current_tool = tool_name or "none"
+        self.selected_actor = None  # 🟦 لتخزين الشكل المحدد العام
+
         print(f"🎯 [Viewer] Active tool: {self.current_tool}")
         # 🆕 تمرير الأداة إلى interactor
         if hasattr(self, "style"):

@@ -29,6 +29,7 @@ class WorkspacePage(QWidget):
         self.sketch_tools_panel = SketchToolsPanel(parent=self)
         layout.addWidget(self.sketch_tools_panel, 0)
 
+
         # ✅ مبدئياً نظهرها لأن Sketch هو النشط
         self.sketch_tools_panel.show()
 
@@ -41,6 +42,19 @@ class WorkspacePage(QWidget):
         vtk_layout.addWidget(self.vtk_viewer)
         layout.addWidget(self.vtk_container, 1)
 
+        # # 🆕 صفحة مكتبة البروفايلات
+        # from frontend.profile.profile_manager_page import ProfileManagerPage
+        # self.profile_page = ProfileManagerPage(viewer=self.vtk_viewer)
+        # self.profile_page.hide()
+        # layout.addWidget(self.profile_page, 1)
+
+        # 🆕 صفحة تبويب البروفايل
+        from profile.profile_page import ProfilePage
+
+        self.profile_page = ProfilePage(self)
+        self.profile_page.hide()
+        layout.addWidget(self.profile_page, 1)
+
         # 🔗 ربط الأدوات بالعارض
         self.sketch_tools_panel.vtk_viewer = self.vtk_viewer
 
@@ -50,11 +64,22 @@ class WorkspacePage(QWidget):
         print("✅ WorkspacePage (فاتحة بالكامل — Sketch نشطة افتراضيًا)")
 
     def on_tab_changed(self, tab_name):
-        """إظهار أو إخفاء أدوات السكيتش"""
+        print(f"[Tab] Switched to: {tab_name}")
+
         if tab_name == "Sketch":
+            self.profile_page.hide()
+            self.vtk_container.show()
             self.fade_panel(True)
+
+        elif tab_name == "Profile":
+            self.fade_panel(False)
+            self.vtk_container.hide()
+            self.profile_page.show()
+
         else:
             self.fade_panel(False)
+            self.profile_page.hide()
+            self.vtk_container.show()
 
     def fade_panel(self, show=True):
         """تأثير ظهور/اختفاء سلس"""
@@ -73,3 +98,9 @@ class WorkspacePage(QWidget):
             anim.finished.connect(panel.hide)
         anim.start()
         self._fade_anim = anim
+
+    # ------------------------------------------------------------
+    # 🔸 فتح نافذة قسم البروفايلات من المجلد الخارجي
+    # ------------------------------------------------------------
+
+

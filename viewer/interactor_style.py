@@ -114,11 +114,21 @@ class SketchInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         print("📋 Pasted — ready to move.")
 
     def _menu_delete(self):
-        if self.selected_actor:
-            self.renderer.RemoveActor(self.selected_actor)
+        actor = self.viewer_ref.selected_actor or self.selected_actor
+        if actor:
+            # حذف الشكل
+            self.renderer.RemoveActor(actor)
+
+            # حذف القياسات المرتبطة (إن وجدت)
+            if hasattr(self, "actor_dims_map") and actor in self.actor_dims_map:
+                for d in self.actor_dims_map[actor]:
+                    self.renderer.RemoveActor(d)
+                del self.actor_dims_map[actor]
+
             self.selected_actor = None
+            self.viewer_ref.selected_actor = None
             self.viewer_ref.update_view()
-            print("🗑️ Deleted.")
+            print("🗑️ Deleted shape and its dimensions.")
         else:
             print("⚠️ Nothing to delete.")
 
@@ -146,6 +156,40 @@ class SketchInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
                 print("⚪ [Select] لا يوجد عنصر محدد.")
             self.viewer_ref.update_view()
             return
+        # ✂️ أدوات التعديل (Trim / Offset / Mirror / Fillet)
+        if tool == "trim":
+            print("✂️ [Trim] Executing trim...")
+            self.viewer_ref.sketch_ops.trim_at(world)
+            return
+
+        elif tool == "offset":
+            print("↔️ [Offset] Executing offset...")
+            actor = self.viewer_ref.selected_actor or self.selected_actor
+            if actor:
+                self.viewer_ref.sketch_ops.modify_ops.offset(actor, distance=10.0)
+            else:
+                print("⚠️ No selected object for offset.")
+            return
+
+        elif tool == "mirror":
+            print("🔁 [Mirror] Executing mirror...")
+            actor = self.viewer_ref.selected_actor or self.selected_actor
+            if actor:
+                axis = "X" if inter.GetShiftKey() else "Y"
+                self.viewer_ref.sketch_ops.modify_ops.mirror(actor, axis)
+            else:
+                print("⚠️ No selected object for mirror.")
+            return
+
+        elif tool == "fillet":
+            self.points.append(world)
+            if len(self.points) == 2:
+                p1, p2 = self.points
+                print("◔ [Fillet] Creating arc...")
+                self.viewer_ref.sketch_ops.modify_ops.fillet(p1, p2, radius=5.0)
+                self.points.clear()
+            return
+
 
 
         # 🟦 وضع التحريك
