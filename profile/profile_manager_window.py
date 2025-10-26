@@ -258,22 +258,36 @@ class ProfileManagerWindow(BaseToolWindow):
         self._current = items[0].data(Qt.UserRole)
         self._show_details(self._current)
 
-    def _show_details(self, p):
+    def _show_details(self, p: dict | None):
+        """عرض تفاصيل البروفايل"""
         if not p:
-            for lbl in (self.name_val, self.size_val, self.company_val, self.desc_val):
-                lbl.setText("-")
             self.preview_label.setText("No Image")
             self.preview_label.setPixmap(QPixmap())
+            self.name_val.setText("-")
+            self.size_val.setText("-")
+            self.company_val.setText("-")
+            self.desc_val.setText("-")
             return
-        self.name_val.setText(p["name"])
-        self.size_val.setText(p["size"])
-        self.company_val.setText(p["company"])
-        self.desc_val.setText(p["desc"])
-        img = Path(p["image"])
-        if img.exists():
-            pix = QPixmap(str(img)).scaled(QSize(260, 180), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+        self.name_val.setText(p.get("name", "-"))
+        self.size_val.setText(p.get("size", "-"))
+        self.company_val.setText(p.get("company", "-"))
+        self.desc_val.setText(p.get("desc", "-"))
+
+        # 🖼️ تحميل الصورة من الحقل الصحيح في القاعدة (thumb_path)
+        thumb = Path(p.get("thumb_path", ""))
+        if thumb.exists():
+            print(f"🖼️ [ProfileManager] تحميل الصورة من: {thumb}")
+            pix = QPixmap(str(thumb)).scaled(
+                QSize(260, 180),
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
+            )
             self.preview_label.setPixmap(pix)
+            self.preview_label.setText("")
         else:
+            print(f"⚠️ [ProfileManager] لا توجد صورة مصغّرة عند المسار: {thumb}")
+            self.preview_label.setPixmap(QPixmap())
             self.preview_label.setText("No Image")
 
     def _on_ok_clicked(self):

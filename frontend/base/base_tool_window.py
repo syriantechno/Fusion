@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QFrame, QSizePolicy
+    QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QFrame, QSizePolicy, QMessageBox
 )
 from PySide6.QtCore import Qt
 
@@ -17,7 +17,7 @@ class BaseToolWindow(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground)
 
         # ✅ تحسين التحكم بالحجم والتمدد
-        self.setMinimumSize(520, 640)
+        self.setMinimumSize(520, 700)
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
 
         # 🟫 الإطار الأساسي (بدون ظل أو radius مبالغ)
@@ -168,3 +168,101 @@ class BaseToolWindow(QWidget):
 
         # ⚙️ ضبط الحجم النهائي ديناميكياً
         self.adjustSize()
+    # --------------------------------------------------------------
+    # 🧩 دالة عامة لعرض الرسائل الموحدة (تحذير / خطأ / نجاح / معلومة)
+    # --------------------------------------------------------------
+    def show_message(self, title, text, level="info"):
+        """إظهار مربع رسالة موحّد بالستايل العام"""
+        msg = QMessageBox(self)
+        msg.setWindowTitle(title)
+        msg.setText(text)
+
+        # 🎨 تحديد اللون حسب نوع الرسالة
+        if level == "error":
+            color = "#C0392B"  # أحمر ناعم
+        elif level == "warn":
+            color = "#E67E22"  # برتقالي
+        elif level == "success":
+            color = "#27AE60"  # أخضر
+        else:
+            color = "#3498DB"  # أزرق للمعلومات
+
+        msg.setIcon({
+                        "error": QMessageBox.Critical,
+                        "warn": QMessageBox.Warning,
+                        "success": QMessageBox.Information,
+                        "info": QMessageBox.Information
+                    }[level])
+
+        # ⚙️ ستايل واضح على الخلفية الفاتحة
+        msg.setStyleSheet(f"""
+            QMessageBox {{
+                background-color: #F1F2F1;
+                color: #333333;                 /* ← نص داكن */
+                font-family: "Roboto";
+                font-size: 12.5px;
+            }}
+            QLabel {{
+                color: #333333;                 /* ← يضمن وضوح النص */
+            }}
+            QPushButton {{
+                background-color: {color};
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 5px 18px;
+                font-weight: 500;
+            }}
+            QPushButton:hover {{
+                background-color: #F39C12;
+            }}
+        """)
+
+        msg.exec()
+
+    # --------------------------------------------------------------
+    # 🧩 دالة تأكيد موحدة (Confirm Dialog)
+    # --------------------------------------------------------------
+    def ask_confirm(self, title: str, text: str) -> bool:
+        """عرض مربع تأكيد Yes/No موحّد بنفس ستايل البرنامج"""
+        msg = QMessageBox(self)
+        msg.setWindowTitle(title)
+        msg.setText(text)
+        msg.setIcon(QMessageBox.Question)
+
+        yes_btn = msg.addButton("OK", QMessageBox.AcceptRole)
+        no_btn = msg.addButton("Cancel", QMessageBox.RejectRole)
+
+        msg.setStyleSheet("""
+            QMessageBox {
+                background-color: #F1F2F1;
+                color: #333;
+                font-family: "Roboto";
+                font-size: 12.5px;
+            }
+            QPushButton {
+                border: none;
+                border-radius: 4px;
+                padding: 5px 18px;
+                font-weight: 500;
+                font-family: "Roboto";
+            }
+            QPushButton:nth-child(1) { /* OK button */
+                background-color: #27AE60;
+                color: white;
+            }
+            QPushButton:nth-child(1):hover {
+                background-color: #2ECC71;
+            }
+            QPushButton:nth-child(2) { /* Cancel button */
+                background-color: #D0D0D0;
+                color: #333;
+            }
+            QPushButton:nth-child(2):hover {
+                background-color: #BDBDBD;
+            }
+        """)
+
+        msg.exec()
+        return msg.clickedButton() == yes_btn
+

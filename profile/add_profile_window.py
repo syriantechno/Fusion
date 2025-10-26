@@ -1,13 +1,8 @@
 # -*- coding: utf-8 -*-
-"""
-نافذة إضافة بروفايل جديدة (Fusion-style)
-ترث من BaseToolWindow وتولّد معاينة تلقائية من DXF
-"""
-
 from pathlib import Path
 from PySide6.QtWidgets import (
     QLabel, QLineEdit, QTextEdit, QPushButton, QFileDialog,
-    QVBoxLayout, QHBoxLayout, QWidget, QMessageBox
+    QVBoxLayout, QHBoxLayout, QWidget, QFrame
 )
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
@@ -15,7 +10,6 @@ from PySide6.QtCore import Qt
 from frontend.base.base_tool_window import BaseToolWindow
 from profile.dxf_normalizer import load_dxf_segments
 from profile.thumbnailer import draw_segments_thumbnail
-
 
 class AddProfileWindow(BaseToolWindow):
     def __init__(self, parent=None):
@@ -26,11 +20,16 @@ class AddProfileWindow(BaseToolWindow):
     # --------------------------------------------------------------
     def _build_ui(self):
         layout = QVBoxLayout(self.content_area)
-        layout.setSizeConstraint(QVBoxLayout.SetMinimumSize)
+        self.content_area.setStyleSheet("""
+            QFrame, QWidget {
+                background-color: #F1F2F1;
+                border: none;
+            }
+        """)
         layout.setContentsMargins(24, 20, 24, 10)
         layout.setSpacing(14)
 
-        # 🧱 حقول الإدخال الكبيرة مع تسميات عربية
+        # 🔹 دالة لإنشاء صف إدخال
         def make_labeled_input(label_text, placeholder=""):
             container = QWidget()
             hbox = QHBoxLayout(container)
@@ -47,11 +46,12 @@ class AddProfileWindow(BaseToolWindow):
             """)
 
             inp = QLineEdit()
+            inp.setFrame(False)
             inp.setPlaceholderText(placeholder)
             inp.setFixedHeight(36)
             inp.setStyleSheet("""
                 QLineEdit {
-                    background-color: rgba(255, 255, 255, 0.85);
+                    background-color: rgba(255,255,255,0.9);
                     border: 1px solid #C8C9C8;
                     border-radius: 5px;
                     font-family: "Roboto";
@@ -61,7 +61,7 @@ class AddProfileWindow(BaseToolWindow):
                 }
                 QLineEdit:focus {
                     border: 1px solid #E67E22;
-                    background-color: rgba(255, 255, 255, 1);
+                    background-color: #FFFFFF;
                 }
             """)
 
@@ -85,21 +85,22 @@ class AddProfileWindow(BaseToolWindow):
         desc_label.setStyleSheet("color:#333; font-family:'Roboto'; font-size:13px; font-weight:500;")
 
         self.desc_input = QTextEdit()
+        self.desc_input.setFrameStyle(QFrame.NoFrame)
         self.desc_input.setPlaceholderText("Profile Description...")
         self.desc_input.setFixedHeight(70)
         self.desc_input.setStyleSheet("""
             QTextEdit {
-                background-color: rgba(255,255,255,0.85);
+                background-color: rgba(255,255,255,0.9);
                 border: 1px solid #C8C9C8;
                 border-radius: 5px;
                 font-family: "Roboto";
                 font-size: 12.5px;
                 color: #333;
-                padding: 4px 6px;
+                padding: 6px 7px;
             }
             QTextEdit:focus {
                 border: 1px solid #E67E22;
-                background-color: rgba(255, 255, 255, 1);
+                background-color: #FFFFFF;
             }
         """)
         desc_layout.addWidget(desc_label)
@@ -114,17 +115,22 @@ class AddProfileWindow(BaseToolWindow):
         file_label.setStyleSheet("color:#333; font-family:'Roboto'; font-size:13px; font-weight:500;")
 
         self.dxf_path = QLineEdit()
+        self.dxf_path.setFrame(False)
         self.dxf_path.setPlaceholderText("Select DXF file...")
         self.dxf_path.setFixedHeight(36)
         self.dxf_path.setStyleSheet("""
             QLineEdit {
-                background-color: #FAFAFA;
+                background-color: rgba(255,255,255,0.9);
                 border: 1px solid #C8C9C8;
-                border-radius: 6px;
+                border-radius: 5px;
                 font-family: "Roboto";
                 font-size: 13px;
                 color: #333;
                 padding: 4px 6px;
+            }
+            QLineEdit:focus {
+                border: 1px solid #E67E22;
+                background-color: #FFFFFF;
             }
         """)
 
@@ -193,11 +199,13 @@ class AddProfileWindow(BaseToolWindow):
 
     # --------------------------------------------------------------
     def _generate_preview(self, file_path: str):
-        """يحاول توليد الصورة من DXF باستخدام الملفات الموجودة"""
         try:
             segs, bbox = load_dxf_segments(Path(file_path))
-            out_name = Path(file_path).stem
-            png_path = draw_segments_thumbnail(segs, bbox, out_name)
+            # 🧩 استخدم اسم البروفايل بدل اسم DXF
+            safe_name = self.name_input.text().strip() or Path(file_path).stem
+            safe_name = safe_name.replace(" ", "_").replace("/", "_")
+
+            png_path = draw_segments_thumbnail(segs, bbox, safe_name)
             pix = QPixmap(png_path)
             self.preview_label.setPixmap(pix.scaled(
                 self.preview_label.width(),
@@ -206,29 +214,12 @@ class AddProfileWindow(BaseToolWindow):
                 Qt.SmoothTransformation
             ))
             print(f"✅ [Preview] generated: {png_path}")
-
         except Exception as e:
             print(f"❌ [Preview Error]: {e}")
             msg = QMessageBox(self)
             msg.setWindowTitle("Preview Error")
-            msg.setText(f"{e}")
+            msg.setText(str(e))
             msg.setIcon(QMessageBox.Warning)
-            msg.setStyleSheet("""
-                QMessageBox {
-                    background-color: #F1F2F1;
-                    color: #333;
-                    font-family: "Roboto";
-                    font-size: 12px;
-                }
-                QPushButton {
-                    background-color: #E67E22;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    padding: 4px 14px;
-                }
-                QPushButton:hover { background-color: #F39C12; }
-            """)
             msg.exec()
 
     # --------------------------------------------------------------
@@ -240,20 +231,22 @@ class AddProfileWindow(BaseToolWindow):
         dxf_path = self.dxf_path.text().strip()
 
         if not all([name, size, company, dxf_path]):
-            QMessageBox.warning(self, "Missing Fields", "Please fill all required fields.")
+            self.show_message("حقول ناقصة", "يرجى تعبئة جميع الحقول المطلوبة.", "warn")
             return
 
         try:
-            # ✅ توليد الصورة (بالفعل يولدها من قبل)
+            # 🖼️ توليد الصورة باسم البروفايل وليس DXF
             segs, bbox = load_dxf_segments(Path(dxf_path))
-            out_name = Path(dxf_path).stem
-            png_path = draw_segments_thumbnail(segs, bbox, out_name)
+            safe_name = name or Path(dxf_path).stem
+            safe_name = safe_name.replace(" ", "_").replace("/", "_")
+            png_path = str(Path(draw_segments_thumbnail(segs, bbox, safe_name)).resolve())
 
-            # ✅ تخزين في قاعدة البيانات
-            from profile import db_manager
-            db_manager.add_profile({
+
+            # 💾 حفظ في قاعدة البيانات
+            from profile import profiles_db
+            profiles_db.add_profile({
                 "name": name,
-                "code": out_name,
+                "code": safe_name,
                 "company": company,
                 "size": size,
                 "file_path": dxf_path,
@@ -262,10 +255,9 @@ class AddProfileWindow(BaseToolWindow):
             })
 
             print(f"💾 [AddProfile] Added to DB: {name} ({size})")
-
-            QMessageBox.information(self, "Saved", "Profile saved successfully.")
+            self.show_message("تم الحفظ", "تم حفظ البروفايل بنجاح.", "success")
             self.close()
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save profile:\n{e}")
+            self.show_message("خطأ", f"فشل في حفظ البروفايل:\n{e}", "error")
 

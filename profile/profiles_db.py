@@ -1,12 +1,23 @@
 # -*- coding: utf-8 -*-
+"""
+📦 Profile Database Manager (SQLite)
+يدير قاعدة بيانات البروفايلات:
+- إنشاء قاعدة البيانات عند أول تشغيل
+- إضافة / قراءة البروفايلات
+"""
+
 import os
 import sqlite3
 from datetime import datetime
+from pathlib import Path
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "profiles.db")
+# تحديد مسار القاعدة داخل مجلد المشروع
+DB_PATH = Path(__file__).parent / "profiles.db"
 
+# -----------------------------------------------------------
 def init_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    """تهيئة القاعدة وإنشاء الجدول إن لم يكن موجوداً"""
+    os.makedirs(DB_PATH.parent, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute("""
@@ -24,23 +35,40 @@ def init_db():
     """)
     conn.commit()
     conn.close()
+    print(f"🧱 [DB] Ready at: {DB_PATH}")
 
-def add_profile(data):
+# -----------------------------------------------------------
+def add_profile(data: dict):
+    """إضافة سجل بروفايل جديد"""
     init_db()
+
+    # 🧩 تصحيح المسارات لتكون مطلقة
+    file_path = str(Path(data.get("file_path", "")).resolve())
+    thumb_path = str(Path(data.get("thumb_path", "")).resolve())
+
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute("""
         INSERT INTO profiles (name, code, company, size, file_path, thumb_path, source, date_added)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-        data.get("name", ""), data.get("code", ""), data.get("company", ""), data.get("size", ""),
-        data.get("file_path", ""), data.get("thumb_path", ""), data.get("source", "DXF"),
+        data.get("name", ""),
+        data.get("code", ""),
+        data.get("company", ""),
+        data.get("size", ""),
+        file_path,
+        thumb_path,
+        data.get("source", "DXF"),
         datetime.now().strftime("%Y-%m-%d %H:%M")
     ))
     conn.commit()
     conn.close()
 
+    print(f"💾 [DB] Added Profile: {data.get('name')} | Thumb={thumb_path}")
+
+# -----------------------------------------------------------
 def get_all_profiles():
+    """جلب جميع البروفايلات"""
     init_db()
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
