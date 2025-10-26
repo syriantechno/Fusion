@@ -3,7 +3,8 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QPushButton, QFrame
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt, QSize, Signal
 
-from profile.profile_window import ProfileWindow
+from profile.profile_manager_window import ProfileManagerWindow
+from profile.add_profile_window import AddProfileWindow
 
 
 class ProfileToolsPanel(QWidget):
@@ -123,6 +124,10 @@ class ProfileToolsPanel(QWidget):
         if tool_name == "library":
             self.open_profile_manager()
 
+            # 🧩 فتح نافذة إضافة بروفايل جديد
+        if tool_name == "add_profile":
+            self.open_add_profile_window()
+
         if self.vtk_viewer:
             self.vtk_viewer.set_active_tool(self.active_tool)
 
@@ -131,15 +136,23 @@ class ProfileToolsPanel(QWidget):
     # ------------------------------------------------------------
     # 🔹 فتح نافذة إدارة البروفايلات
     # ------------------------------------------------------------
-    def open_profile_manager(self):
-        """فتح نافذة إدارة مكتبة البروفايلات"""
-        print("📂 فتح نافذة إدارة مكتبة البروفايلات...")
-        from PySide6.QtCore import Qt
-        self.profile_window = ProfileWindow(parent=None)
-        self.profile_window.setWindowModality(Qt.ApplicationModal)
-        self.profile_window.setWindowFlag(Qt.Window, True)
-        self.profile_window.setWindowTitle("📘 مكتبة البروفايلات")
-        self.profile_window.resize(1000, 600)
-        self.profile_window.show()
-        self.profile_window.raise_()
 
+    def open_profile_manager(self):
+        """فتح نافذة مكتبة البروفايلات الجديدة"""
+        print("📂 فتح نافذة مكتبة البروفايلات (الإصدار الجديد)...")
+        try:
+            self.profile_window = ProfileManagerWindow(parent=self)
+            self.profile_window.show()
+            print("🟢 [UI] تم فتح نافذة مكتبة البروفايلات الجديدة بنجاح.")
+        except Exception as e:
+            print("🔥 [Error] فشل في فتح مكتبة البروفايلات:", e)
+
+    def open_add_profile_window(self):
+        """فتح نافذة إضافة بروفايل جديد"""
+        print("📂 فتح نافذة إضافة بروفايل جديد...")
+        try:
+            self.add_window = AddProfileWindow(parent=self)
+            self.add_window.show()
+            print("🟢 [UI] تم فتح نافذة الإضافة بنجاح.")
+        except Exception as e:
+            print("🔥 [Error] فشل في فتح نافذة الإضافة:", e)
