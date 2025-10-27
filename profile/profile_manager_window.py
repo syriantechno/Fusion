@@ -274,8 +274,8 @@ class ProfileManagerWindow(BaseToolWindow):
         self.company_val.setText(p.get("company", "-"))
         self.desc_val.setText(p.get("desc", "-"))
 
-        # 🖼️ تحميل الصورة من الحقل الصحيح في القاعدة (thumb_path)
-        thumb = Path(p.get("thumb_path", ""))
+        # 🖼️ تحميل الصورة من الحقل الصحيح في القاعدة (image = thumb_path)
+        thumb = Path(p.get("image", ""))  # ✅ بدل thumb_path إلى image
         if thumb.exists():
             print(f"🖼️ [ProfileManager] تحميل الصورة من: {thumb}")
             pix = QPixmap(str(thumb)).scaled(
