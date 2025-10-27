@@ -314,6 +314,12 @@ class ProfileManagerWindow(BaseToolWindow):
         while main_window.parent() is not None:
             main_window = main_window.parent()
 
+        # ✅ حفظ المسار داخل workspace_page ليستعمل لاحقاً في الإكسترود
+        if hasattr(main_window, "workspace_page"):
+            main_window.workspace_page.last_profile_path = str(file_path)
+            print(f"📎 [ProfileManager] تم حفظ مسار البروفايل الأخير: {file_path}")
+
+        # ✅ تمرير المسار إلى العارض مباشرة (عرض DXF)
         if hasattr(main_window, "open_profile_file"):
             try:
                 main_window.open_profile_file(str(file_path))
@@ -323,7 +329,6 @@ class ProfileManagerWindow(BaseToolWindow):
         else:
             print("⚠️ [ProfileManager] لم يتم العثور على open_profile_file في MainWindow.")
 
-        self.close()
 
 
 

@@ -271,3 +271,71 @@ def load_dxf_segments(path: Path) -> Tuple[List[Segment], Tuple[float,float,floa
             return _segments_by_ezdxf(path)
         except Exception as e2:
             raise RuntimeError(f"فشل تفكيك DXF: {e}\nFallback error: {e2}")
+
+
+
+
+# --------------------------------------------------------------
+# 🧱 بناء وجه هندسي من المقاطع (نسخة آمنة ضد NULL)
+# --------------------------------------------------------------
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeWire, BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeFace
+from OCC.Core.BRepCheck import BRepCheck_Analyzer
+from OCC.Core.gp import gp_Pnt
+from OCC.Core.TopoDS import TopoDS_Shape
+
+def build_face_from_segments(segments):
+    """
+    بناء وجه هندسي مغلق من مجموعة مقاطع DXF.
+    """
+    from OCC.Core.gp import gp_Pnt
+    from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeWire
+    from OCC.Core.BRep import BRep_Builder
+    from OCC.Core.TopoDS import TopoDS_Compound
+    from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeFace
+
+    try:
+        if not segments:
+            print("⚠️ [DXFNormalizer] لا توجد مقاطع لإنشاء وجه.")
+            return None
+
+        # نحاول بناء أسلاك مغلقة
+        edges = []
+        for (p1, p2) in segments:
+            try:
+                edge = BRepBuilderAPI_MakeEdge(
+                    gp_Pnt(float(p1[0]), float(p1[1]), 0.0),
+                    gp_Pnt(float(p2[0]), float(p2[1]), 0.0)
+                ).Edge()
+                edges.append(edge)
+            except Exception:
+                pass
+
+        if not edges:
+            print("⚠️ [DXFNormalizer] لا توجد Edges صالحة في المقاطع.")
+            return None
+
+        # محاولة بناء Wire مغلق
+        wire_builder = BRepBuilderAPI_MakeWire()
+        for e in edges:
+            wire_builder.Add(e)
+
+        if not wire_builder.IsDone():
+            print("⚠️ [DXFNormalizer] فشل بناء Wire.")
+            return None
+
+        wire = wire_builder.Wire()
+        face = BRepBuilderAPI_MakeFace(wire)
+        if not face.IsDone():
+            print("⚠️ [DXFNormalizer] فشل بناء Face.")
+            return None
+
+        print("🧱 [DXFNormalizer] تم بناء وجه هندسي بنجاح.")
+        return face.Face()
+
+    except Exception as e:
+        print(f"⚠️ [DXFNormalizer] فشل بناء الوجه من المقاطع: {e}")
+        return None
+
+
+
+

@@ -266,3 +266,27 @@ class BaseToolWindow(QWidget):
         msg.exec()
         return msg.clickedButton() == yes_btn
 
+    # --------------------------------------------------------------
+    # 🧩 دالة لتعيين محتوى النافذة (Fusion-style)
+    # --------------------------------------------------------------
+    def set_content_widget(self, widget: QWidget):
+        """تعيين محتوى النافذة داخل منطقة content_area"""
+        # إذا ما كان للـ content_area تخطيط، أنشئ واحد
+        if not self.content_area.layout():
+            layout = QVBoxLayout(self.content_area)
+            layout.setContentsMargins(0, 0, 0, 0)
+            layout.setSpacing(0)
+        else:
+            layout = self.content_area.layout()
+
+        # حذف أي عناصر سابقة
+        while layout.count():
+            item = layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        # إضافة المحتوى الجديد
+        layout.addWidget(widget)
+
+
+

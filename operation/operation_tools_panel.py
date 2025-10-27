@@ -31,9 +31,7 @@ class OperationToolsPanel(QWidget):
         ]
 
         # ❌ إلغاء / عودة
-        extra_tools = [
-            ("cancel.png", "إلغاء", "none")
-        ]
+        extra_tools = [("cancel.png", "إلغاء", "none")]
 
         # 🎨 ستايل موحّد (نفس Sketch/Shape)
         self.setStyleSheet("""
@@ -79,8 +77,6 @@ class OperationToolsPanel(QWidget):
         layout.addStretch()
 
     # ------------------------------------------------------------
-    # 🔹 إنشاء زر أيقونة موحد
-    # ------------------------------------------------------------
     def _make_button(self, icon_file, label, tool_id):
         btn = QPushButton()
         btn.setIcon(QIcon(f"assets/icons/{icon_file}"))
@@ -93,8 +89,6 @@ class OperationToolsPanel(QWidget):
         return btn
 
     # ------------------------------------------------------------
-    # 🔹 فاصل عمودي أنيق
-    # ------------------------------------------------------------
     def _make_separator(self):
         sep = QFrame()
         sep.setFrameShape(QFrame.VLine)
@@ -103,8 +97,6 @@ class OperationToolsPanel(QWidget):
         sep.setFixedHeight(40)
         return sep
 
-    # ------------------------------------------------------------
-    # 🔹 تفعيل أداة معينة
     # ------------------------------------------------------------
     def activate_tool(self, tool_name):
         """تفعيل الأداة وتحديث المظهر"""
@@ -131,7 +123,47 @@ class OperationToolsPanel(QWidget):
         self.active_tool = None if tool_name == "none" else tool_name
         print(f"🟢 [OperationTools] Active tool = {self.active_tool or 'None'}")
 
+        # 🧱 فتح نافذة الإكسترود
+        if tool_name == "extrude":
+            self.open_extrude_window()
+
+        # تمرير الأداة الحالية إلى العارض (لو موجود)
         if self.vtk_viewer:
             self.vtk_viewer.set_active_tool(self.active_tool)
 
         self.tool_selected.emit(self.active_tool or "")
+
+    # ------------------------------------------------------------
+    def open_extrude_window(self):
+        """فتح نافذة الإكسترود الجديدة"""
+        print("📂 فتح نافذة الإكسترود (Fusion-style)...")
+        try:
+            from operation.extrude_window import ExtrudeWindow
+
+            # نحاول إيجاد MainWindow الحقيقي
+            main_window = self.parent()
+            while main_window and not hasattr(main_window, "workspace_page"):
+                main_window = main_window.parent()
+
+            # نحاول الحصول على مسار البروفايل الأخير من workspace_page
+            dxf_path = None
+            if main_window and hasattr(main_window, "workspace_page"):
+                ws = main_window.workspace_page
+                dxf_path = getattr(ws, "last_profile_path", None)
+                if dxf_path:
+                    print(f"📎 [OperationTools] آخر بروفايل محمّل: {dxf_path}")
+                else:
+                    print("⚠️ [OperationTools] لم يتم العثور على أي بروفايل محمّل مؤخراً.")
+
+            # إنشاء نافذة الإكسترود وتمرير المسار
+            self.extrude_window = ExtrudeWindow(parent=main_window, profile_path=dxf_path)
+            self.extrude_window.show()
+            print("🟢 [UI] تم فتح نافذة الإكسترود بنجاح.")
+
+        except Exception as e:
+            print(f"🔥 [Error] فشل في فتح نافذة الإكسترود: {e}")
+
+    # ------------------------------------------------------------
+    def open_hole_window(self):
+        """فتح نافذة الثقب (اختياري)"""
+        print("📂 فتح نافذة الثقب...")
