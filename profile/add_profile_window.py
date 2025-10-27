@@ -223,7 +223,9 @@ class AddProfileWindow(BaseToolWindow):
             msg.exec()
 
     # --------------------------------------------------------------
+    # --------------------------------------------------------------
     def _on_ok_clicked(self):
+        """حفظ البروفايل ونسخ ملف DXF إلى مجلد data/shapes باسم البروفايل"""
         name = self.name_input.text().strip()
         size = self.size_input.text().strip()
         company = self.company_input.text().strip()
@@ -235,23 +237,44 @@ class AddProfileWindow(BaseToolWindow):
             return
 
         try:
-            # 🖼️ توليد الصورة باسم البروفايل وليس DXF
-            segs, bbox = load_dxf_segments(Path(dxf_path))
-            safe_name = name or Path(dxf_path).stem
-            safe_name = safe_name.replace(" ", "_").replace("/", "_")
+            from pathlib import Path
+            import shutil
+            from profile import profiles_db
+            from profile.dxf_normalizer import load_dxf_segments
+            from profile.thumbnailer import draw_segments_thumbnail
+
+            # مجلدات التخزين
+            shapes_dir = Path("data/shapes")
+            shapes_dir.mkdir(parents=True, exist_ok=True)
+
+            # اسم آمن مشتق من اسم البروفايل (ونستخدمه للـ DXF والـ thumbnail)
+            safe_name = (name or "profile").strip()
+            safe_name = safe_name.replace(" ", "_").replace("/", "_").replace("\\", "_")
+
+            # المسار الأصلي للـ DXF
+            src = Path(dxf_path)
+            ext = (src.suffix.lower() or ".dxf")  # نتأكد تبقى .dxf
+            dst = shapes_dir / f"{safe_name}{ext}"  # ✅ حفظ باسم البروفايل
+
+            # نسخ/استبدال الملف إلى الاسم الجديد داخل المشروع
+            if src.resolve() != dst.resolve():
+                shutil.copy2(src, dst)
+            print(f"📂 [AddProfile] DXF copied as: {dst.name}")
+
+            # توليد/تحديث الصورة المصغّرة بنفس الاسم
+            segs, bbox = load_dxf_segments(dst)
             png_path = str(Path(draw_segments_thumbnail(segs, bbox, safe_name)).resolve())
 
-
-            # 💾 حفظ في قاعدة البيانات
-            from profile import profiles_db
+            # حفظ في قاعدة البيانات بالمسارات النهائية
             profiles_db.add_profile({
                 "name": name,
                 "code": safe_name,
                 "company": company,
                 "size": size,
-                "file_path": dxf_path,
-                "thumb_path": png_path,
-                "source": "DXF"
+                "file_path": str(dst),  # ✅ يشير ل data/shapes/<safe_name>.dxf
+                "thumb_path": png_path,  # عادةً data/thumbnails/<safe_name>.png
+                "source": "DXF",
+                "desc": desc,
             })
 
             print(f"💾 [AddProfile] Added to DB: {name} ({size})")
@@ -260,4 +283,7 @@ class AddProfileWindow(BaseToolWindow):
 
         except Exception as e:
             self.show_message("خطأ", f"فشل في حفظ البروفايل:\n{e}", "error")
+            print(f"❌ [AddProfile] Error: {e}")
+
+
 
