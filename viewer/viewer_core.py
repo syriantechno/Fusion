@@ -104,3 +104,74 @@ class ViewerCore:
         marker_widget.SetInteractor(self.renderer.GetRenderWindow().GetInteractor())
         marker_widget.SetEnabled(True)
         marker_widget.InteractiveOff()
+
+    def display_shape(self, shape):
+        """
+        عرض شكل TopoDS_Shape داخل مشهد VTK (سريع جدًا).
+        يجمع كل الخطوط في PolyData واحدة لتقليل الضغط.
+        """
+        import vtk
+        from OCC.Core.BRep import BRep_Tool
+        from OCC.Core.TopExp import TopExp_Explorer
+        from OCC.Core.TopAbs import TopAbs_EDGE
+        from OCC.Core.gp import gp_Pnt
+
+        if shape is None or shape.IsNull():
+            print("⚠️ [ViewerCore] الشكل فارغ، لا يمكن عرضه.")
+            return
+
+        try:
+            points = vtk.vtkPoints()
+            lines = vtk.vtkCellArray()
+            exp = TopExp_Explorer(shape, TopAbs_EDGE)
+            point_id = 0
+            count = 0
+
+            # 🧩 جمع كل النقاط والخطوط معًا
+            while exp.More():
+                edge = exp.Current()
+                curve, first, last = BRep_Tool.Curve(edge)
+                if curve is not None:
+                    p1 = gp_Pnt()
+                    p2 = gp_Pnt()
+                    curve.D0(first, p1)
+                    curve.D0(last, p2)
+
+                    id1 = point_id
+                    id2 = point_id + 1
+                    points.InsertNextPoint(p1.X(), p1.Y(), p1.Z())
+                    points.InsertNextPoint(p2.X(), p2.Y(), p2.Z())
+
+                    line = vtk.vtkLine()
+                    line.GetPointIds().SetId(0, id1)
+                    line.GetPointIds().SetId(1, id2)
+                    lines.InsertNextCell(line)
+
+                    point_id += 2
+                    count += 1
+
+                exp.Next()
+
+            # 🧱 إنشاء الشكل النهائي دفعة واحدة
+            polydata = vtk.vtkPolyData()
+            polydata.SetPoints(points)
+            polydata.SetLines(lines)
+
+            mapper = vtk.vtkPolyDataMapper()
+            mapper.SetInputData(polydata)
+
+            actor = vtk.vtkActor()
+            actor.SetMapper(mapper)
+            actor.GetProperty().SetColor(0.2, 0.5, 0.9)
+            actor.GetProperty().SetLineWidth(1.5)
+
+            self.renderer.AddActor(actor)
+            self.renderer.ResetCamera()
+            print(f"🟢 [ViewerCore] تم عرض {count} خط داخل مشهد VTK بنجاح (عرض سريع).")
+
+        except Exception as e:
+            print(f"❌ [ViewerCore] فشل عرض الشكل داخل VTK: {e}")
+
+
+
+

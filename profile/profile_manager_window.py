@@ -291,8 +291,43 @@ class ProfileManagerWindow(BaseToolWindow):
             self.preview_label.setText("No Image")
 
     def _on_ok_clicked(self):
+        """إرسال مسار ملف البروفايل للعارض بدون أي معالجة DXF هنا"""
         if not self._current:
-            print("ℹ️ لا يوجد بروفايل محدد")
+            print("⚠️ لم يتم اختيار أي بروفايل.")
             return
-        print("✅ Profile:", self._current["name"], "| Face:", self.face_selector.get_selected_face())
+
+        from pathlib import Path
+        file_path = self._current.get("file_path") or self._current.get("source")
+        if not file_path:
+            print("⚠️ [ProfileManager] لا يوجد مسار ملف مرتبط بالبروفايل.")
+            return
+
+        file_path = Path(file_path)
+        if not file_path.exists():
+            print(f"⚠️ [ProfileManager] الملف غير موجود: {file_path}")
+            return
+
+        print(f"📂 [ProfileManager] إرسال المسار للعارض: {file_path}")
+
+        # الصعود للـ MainWindow الحقيقي
+        main_window = self
+        while main_window.parent() is not None:
+            main_window = main_window.parent()
+
+        if hasattr(main_window, "open_profile_file"):
+            try:
+                main_window.open_profile_file(str(file_path))
+                print("🟢 [ProfileManager] تم تمرير المسار للعارض.")
+            except Exception as e:
+                print(f"❌ [ProfileManager] فشل تمرير المسار للعارض: {e}")
+        else:
+            print("⚠️ [ProfileManager] لم يتم العثور على open_profile_file في MainWindow.")
+
         self.close()
+
+
+
+
+
+
+

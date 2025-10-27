@@ -79,3 +79,15 @@ class MainWindow(QWidget):
         """الانتقال من صفحة البداية إلى صفحة العمل"""
         print("🚀 الانتقال إلى واجهة العمل")
         self.pages.setCurrentIndex(1)
+
+    def open_profile_file(self, file_path: str):
+        """تحميل ملف البروفايل عبر عارض VTK"""
+        try:
+            viewer = self.workspace_page.vtk_viewer
+            viewer.load_dxf(file_path)  # ✅ الدالة الجديدة
+            print(f"🟢 [MainWindow] تم تحميل الملف في العارض: {file_path}")
+        except Exception as e:
+            print(f"❌ [MainWindow] فشل تحميل الملف في العارض: {e}")
+
+
+
