@@ -209,6 +209,20 @@ class VTKViewer(QWidget):
             print(f"❌ [VTKViewer] فشل في عرض DXF: {e}")
 
 
+from tools.geometry_ops import extrude_profile
+
+def extrude_current_shape(self, depth: float = 40.0, axis: str = "Y"):
+    """ينفذ الإكسترود عبر geometry_ops"""
+    if not hasattr(self, "last_profile_path"):
+        print("⚠️ [VTKViewer] لا يوجد مسار ملف DXF.")
+        return
+    prism = extrude_profile(self.last_profile_path, depth, axis)
+    if prism:
+        self.clear_scene()
+        self.core.display_shape(prism)
+        print("🟢 [VTKViewer] تم عرض الإكسترود بنجاح.")
+    else:
+        print("⚠️ [VTKViewer] لم يُنشأ أي شكل.")
 
 
 

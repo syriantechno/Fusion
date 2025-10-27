@@ -12,7 +12,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 
 from frontend.base.base_tool_window import BaseToolWindow
-from tools.geometry_ops import extrude_from_dxf
+from tools.geometry_ops import extrude_profile
+
 
 
 class ExtrudeWindow(BaseToolWindow):
@@ -114,7 +115,7 @@ class ExtrudeWindow(BaseToolWindow):
         print(f"🟢 [ExtrudeWindow] بدء الإكسترود على المحور {axis} بعمق {depth}mm ...")
 
         try:
-            solid = extrude_from_dxf(dxf_path, depth, axis)
+            solid = extrude_profile(dxf_path, depth, axis)
             if solid and not solid.IsNull():
                 if hasattr(viewer, "clear_scene"):
                     viewer.clear_scene()
