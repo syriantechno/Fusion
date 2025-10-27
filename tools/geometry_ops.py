@@ -174,7 +174,7 @@ def auto_extrude_solution(segments, depth, axis):
     from OCC.Core.BRepTools import BRepTools_WireExplorer
     from OCC.Core.TopAbs import TopAbs_EDGE
     from OCC.Core.TopExp import TopExp_Explorer
-    from OCC.Core.TopoDS import topods_Edge
+
 
     # جمع جميع النقاط الفريدة
     all_points = set()
